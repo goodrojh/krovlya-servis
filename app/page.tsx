@@ -1,4 +1,5 @@
 "use client";
+import { LazyMotion, domAnimation } from "framer-motion";
 import { LeadProvider } from "@/components/krovlya/LeadModal";
 import Hero from "@/components/krovlya/Hero";
 import Features from "@/components/krovlya/Features";
@@ -14,6 +15,7 @@ import MobileBar from "@/components/krovlya/MobileBar";
 
 export default function Home() {
   return (
+    <LazyMotion features={domAnimation} strict>
     <LeadProvider>
       <main className="min-h-screen">
         <Hero />
@@ -29,5 +31,6 @@ export default function Home() {
       </main>
       <MobileBar />
     </LeadProvider>
+    </LazyMotion>
   );
 }

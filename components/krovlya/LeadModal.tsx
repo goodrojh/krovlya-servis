@@ -1,6 +1,6 @@
 "use client";
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { m, AnimatePresence } from "framer-motion";
 import { X, Phone, Check, ShieldCheck, Clock, Loader2 } from "lucide-react";
 import { PHONE, PHONE_HREF, img } from "@/lib/site";
 
@@ -49,7 +49,7 @@ export async function sendLead(data: Record<string, string>) {
 
 const extraLabels = {
   area: { label: "Примерная площадь кровли, м²", placeholder: "Например, 250" },
-  comment: { label: "Что случилось?", placeholder: "Течёт после дождя над кухней…" },
+  comment: { label: "Описание", placeholder: "Например: протечка над подъездом после дождя" },
   address: { label: "Адрес или район объекта", placeholder: "Москва, ул. …" },
 };
 
@@ -58,11 +58,17 @@ function LeadForm({ preset, onDone }: { preset: LeadPreset; onDone: () => void }
   const [phone, setPhone] = useState("");
   const [extra, setExtra] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [touched, setTouched] = useState(false);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const valid = phone.replace(/\D/g, "").length === 11;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid) {
+      setTouched(true);
+      phoneRef.current?.focus();
+      return;
+    }
     setState("sending");
     try {
       await sendLead({ name, phone, extra, source: preset.source, context: preset.context || "" });
@@ -74,7 +80,7 @@ function LeadForm({ preset, onDone }: { preset: LeadPreset; onDone: () => void }
 
   if (state === "done") {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center py-6">
+      <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center py-6">
         <div className="relative w-16 h-16 mb-5">
           <span className="absolute inset-0 rounded-full bg-leaf/40 pulse-ring" />
           <div className="relative w-16 h-16 rounded-full bg-leaf flex items-center justify-center">
@@ -83,13 +89,13 @@ function LeadForm({ preset, onDone }: { preset: LeadPreset; onDone: () => void }
         </div>
         <h3 className="font-display text-2xl font-semibold text-white mb-2">Заявка принята</h3>
         <p className="text-white/70 max-w-[320px] leading-relaxed">
-          Инженер перезвонит в течение 15 минут в рабочее время. Если течёт прямо сейчас — звоните, не ждите.
+          Инженер свяжется с вами в течение 15 минут в рабочее время. При аварийной протечке звоните по телефону.
         </p>
         <a href={PHONE_HREF} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white text-ink px-6 py-3 font-semibold">
           <Phone className="w-4 h-4" /> {PHONE}
         </a>
         <button onClick={onDone} className="mt-4 text-sm text-white/50 hover:text-white">Закрыть</button>
-      </motion.div>
+      </m.div>
     );
   }
 
@@ -101,50 +107,52 @@ function LeadForm({ preset, onDone }: { preset: LeadPreset; onDone: () => void }
         </div>
       )}
       <label className="flex flex-col gap-1.5">
-        <span className="text-[12px] text-white/50 pl-1">Как к вам обращаться</span>
+        <span className="text-[13px] text-white/65 pl-1">Как к вам обращаться</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Имя"
           autoComplete="name"
-          className="h-14 rounded-2xl bg-white/[0.06] border border-white/10 px-5 text-white placeholder:text-white/30 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition"
+          className="h-14 rounded-2xl bg-white/[0.06] border border-white/10 px-5 text-white placeholder:text-white/40 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition"
         />
       </label>
       <label className="flex flex-col gap-1.5">
-        <span className="text-[12px] text-white/50 pl-1">Телефон *</span>
+        <span className="text-[13px] text-white/65 pl-1">Телефон *</span>
         <input
+          ref={phoneRef}
           value={phone}
           onChange={(e) => setPhone(formatPhone(e.target.value))}
           onFocus={() => !phone && setPhone("+7")}
           placeholder="+7 (___) ___-__-__"
           inputMode="tel"
           autoComplete="tel"
-          required
-          className="h-14 rounded-2xl bg-white/[0.06] border border-white/10 px-5 text-white text-lg tracking-wide placeholder:text-white/30 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition"
+          aria-invalid={touched && !valid}
+          className={"h-14 rounded-2xl bg-white/[0.06] border px-5 text-white text-lg tracking-wide placeholder:text-white/40 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition " + (touched && !valid ? "border-red-400/80" : "border-white/10")}
         />
+        {touched && !valid && <span className="text-[13px] text-red-300 pl-1">Введите номер полностью: 10 цифр после +7</span>}
       </label>
       {preset.extra && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-[12px] text-white/50 pl-1">{extraLabels[preset.extra].label}</span>
+          <span className="text-[13px] text-white/65 pl-1">{extraLabels[preset.extra].label}</span>
           <input
             value={extra}
             onChange={(e) => setExtra(e.target.value)}
             placeholder={extraLabels[preset.extra].placeholder}
             inputMode={preset.extra === "area" ? "numeric" : "text"}
-            className="h-14 rounded-2xl bg-white/[0.06] border border-white/10 px-5 text-white placeholder:text-white/30 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition"
+            className="h-14 rounded-2xl bg-white/[0.06] border border-white/10 px-5 text-white placeholder:text-white/40 outline-none focus:border-flame/70 focus:bg-white/[0.09] transition"
           />
         </label>
       )}
       <button
         type="submit"
-        disabled={!valid || state === "sending"}
-        className="mt-2 h-14 rounded-full bg-fire text-white font-semibold text-[16px] shadow-[0_12px_40px_-8px_rgba(255,90,31,0.7)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 flex items-center justify-center gap-2"
+        disabled={state === "sending"}
+        className="mt-2 h-14 rounded-full bg-fire text-white font-semibold text-[16px] shadow-[0_12px_40px_-10px_rgba(240,82,24,0.7)] transition-transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2"
       >
         {state === "sending" ? <Loader2 className="w-5 h-5 animate-spin" /> : preset.button || "Отправить заявку"}
       </button>
       {state === "error" && <p className="text-sm text-red-400 text-center">Не отправилось. Позвоните нам: {PHONE}</p>}
-      <p className="text-[11px] text-white/35 text-center leading-snug mt-1">
-        Нажимая кнопку, вы соглашаетесь на обработку персональных данных. Никакого спама — только звонок инженера.
+      <p className="text-[12px] text-white/50 text-center leading-snug mt-1">
+        Нажимая кнопку, вы соглашаетесь на обработку персональных данных. Данные используются только для связи по заявке.
       </p>
     </form>
   );
@@ -161,6 +169,10 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
   const close = () => setPreset(null);
 
   useEffect(() => {
+    document.documentElement.classList.add("hydrated");
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow = preset ? "hidden" : "";
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPreset(null);
     window.addEventListener("keydown", onKey);
@@ -172,7 +184,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       {children}
       <AnimatePresence>
         {preset && (
-          <motion.div
+          <m.div
             key="lead-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -180,7 +192,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
             className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6"
             onClick={close}
           >
-            <motion.div
+            <m.div
               key={"lead-" + key}
               role="dialog"
               aria-modal="true"
@@ -194,11 +206,11 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
             >
               {/* Левая колонка с фото */}
               <div className="relative hidden sm:block min-h-[520px] overflow-hidden">
-                <img src={img(preset.image || "torch-close.webp")} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={img(preset.image || "torch-close.webp")} alt="" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-graphite via-graphite/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-7 flex flex-col gap-3">
                   {[
-                    { icon: <Clock className="w-4 h-4" />, t: "Перезвоним за 15 минут" },
+                    { icon: <Clock className="w-4 h-4" />, t: "Ответ в течение 15 минут" },
                     { icon: <ShieldCheck className="w-4 h-4" />, t: "Выезд инженера и смета — бесплатно" },
                   ].map((i) => (
                     <div key={i.t} className="flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-3 text-white text-sm">
@@ -228,12 +240,12 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
                 {!preset.subtitle && <div className="h-6" />}
                 <LeadForm key={key} preset={preset} onDone={close} />
                 <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between gap-3 text-sm">
-                  <span className="text-white/45">Быстрее по телефону:</span>
+                  <span className="text-white/60">Телефон:</span>
                   <a href={PHONE_HREF} className="font-semibold text-white hover:text-amber transition whitespace-nowrap">{PHONE}</a>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </LeadContext.Provider>

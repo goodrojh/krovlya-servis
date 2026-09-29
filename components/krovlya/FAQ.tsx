@@ -1,32 +1,32 @@
 "use client";
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Hammer, ShieldCheck, Wallet } from "lucide-react";
-import { img } from "@/lib/site";
+import { m, AnimatePresence } from "framer-motion";
+import { Plus, Hammer, ShieldCheck, Wallet } from "lucide-react";
 import { useLead } from "./LeadModal";
+import { SectionHeader, Button, container, sectionPad } from "./ui";
 
 type Item = { question: string; answer: string };
 
 const faqData: Record<string, Item[]> = {
   works: [
-    { question: "Сколько стоит выезд инженера?", answer: "Бесплатно. Инженер приезжает в Москве и ближнем Подмосковье, осматривает крышу, делает фото дефектов и составляет смету. Вы ни к чему не обязаны." },
-    { question: "Как быстро приедете, если течёт прямо сейчас?", answer: "Аварийную протечку стараемся локализовать в течение суток. Позвоните — диспетчер скажет точное время бригады на сегодня или завтра." },
-    { question: "Можно ли ремонтировать крышу в дождь или зимой?", answer: "Наплавлять по мокрому основанию нельзя — будут вздутия. В дождь работаем только аварийно под укрытием. Зимой ремонтируем по сухому основанию с прогревом, при сильных морозах — временная герметизация до весны." },
-    { question: "Сколько длится ремонт?", answer: "Локальный ремонт — 1 день. Кровля подъезда или небольшого дома — 2–5 дней. Склады от 1 000 м² — по графику из договора, обычно 7–14 дней." },
-    { question: "Какие материалы используете?", answer: "Сертифицированные битумно-полимерные наплавляемые материалы российского производства: подкладочный слой и верхний с защитной посыпкой. В смете указываем марку каждого материала." },
-    { question: "Нужно ли снимать старое покрытие?", answer: "Не всегда. Если основание сухое и ковёр держится — наплавляем поверх, это дешевле. Если под ковром вода или слоёв уже больше 5 — снимаем. Решает инженер по результатам осмотра и вскрытия." },
+    { question: "Сколько стоит выезд инженера?", answer: "Выезд бесплатный. Инженер осматривает кровлю, выполняет фотофиксацию дефектов и составляет смету. Заказчик ни к чему не обязан." },
+    { question: "Как быстро выезжает бригада при аварийной протечке?", answer: "Аварийную протечку локализуем в течение 24 часов. Точное время выезда бригады сообщает диспетчер при звонке." },
+    { question: "Выполняются ли работы в дождь и зимой?", answer: "Наплавление на влажное основание не допускается. В дождь выполняются только аварийные работы. Зимой ремонт ведётся по сухому основанию с прогревом; при сильных морозах выполняется временная герметизация до весны." },
+    { question: "Сколько длится ремонт?", answer: "Локальный ремонт — 1 день. Кровля подъезда или небольшого дома — 2–5 дней. Объекты от 1 000 м² — по графику договора, как правило 7–14 дней." },
+    { question: "Какие материалы применяются?", answer: "Сертифицированные битумно-полимерные наплавляемые материалы: подкладочный слой и верхний слой с защитной посыпкой. Марка каждого материала указывается в смете." },
+    { question: "Требуется ли демонтаж старого покрытия?", answer: "Не всегда. При сухом основании и прочном сцеплении материал наплавляется поверх существующего. При наличии влаги под ковром или большом количестве слоёв выполняется демонтаж. Решение принимается по результатам осмотра и вскрытия." },
   ],
   guarantee: [
-    { question: "Какая гарантия на работы?", answer: "От 2 лет на локальный ремонт до 10 лет на капитальный ремонт в два слоя. Срок прописываем в договоре." },
-    { question: "Что будет, если после ремонта потечёт?", answer: "Приезжаем бесплатно по гарантии, находим причину и устраняем за свой счёт. Сроки реакции на гарантийный случай указаны в договоре." },
-    { question: "Работаете по договору?", answer: "Всегда. Договор подряда, смета, акт выполненных работ. Для юрлиц и УК — КС-2, КС-3, счёт-фактура." },
-    { question: "Как я узнаю, что работы сделаны качественно?", answer: "Присылаем фотоотчёт по каждому этапу: подготовка основания, праймер, первый и второй слой, примыкания. Можно подняться на крышу вместе с прорабом при приёмке." },
+    { question: "Какая гарантия на работы?", answer: "От 2 лет на локальный ремонт до 10 лет на капитальный ремонт в два слоя. Гарантийный срок указывается в договоре." },
+    { question: "Что происходит при протечке в гарантийный период?", answer: "Выезжаем бесплатно, устанавливаем причину и устраняем дефект за свой счёт. Сроки реагирования на гарантийный случай указаны в договоре." },
+    { question: "Работаете по договору?", answer: "Да. Договор подряда, смета, акт выполненных работ. Для юридических лиц и УК — КС-2, КС-3, счёт-фактура." },
+    { question: "Как контролировать качество работ?", answer: "Фотоотчёт предоставляется по каждому этапу: подготовка основания, праймер, первый и второй слой, примыкания. Приёмка работ возможна совместно с прорабом на кровле." },
   ],
   payment: [
-    { question: "Нужна ли предоплата?", answer: "Для физлиц — только на материалы, работу оплачиваете после приёмки. Для юрлиц — по условиям договора, возможна поэтапная оплата." },
-    { question: "Как можно оплатить?", answer: "Наличными, переводом на карту, по счёту безналично с НДС или без." },
-    { question: "Может ли цена вырасти в процессе?", answer: "Нет. Цена фиксируется в смете. Если при вскрытии найдём скрытые проблемы — сначала покажем их на фото и согласуем с вами, без самодеятельности." },
-    { question: "Работаете с УК, ТСЖ и госзаказчиками?", answer: "Да. Готовим сметы для общего собрания собственников, работаем по безналу, предоставляем полный пакет закрывающих документов." },
+    { question: "Нужна ли предоплата?", answer: "Для физических лиц — только на материалы, работы оплачиваются после приёмки. Для юридических лиц — по условиям договора, возможна поэтапная оплата." },
+    { question: "Какие способы оплаты доступны?", answer: "Наличный расчёт, перевод на карту, безналичный расчёт по счёту с НДС или без НДС." },
+    { question: "Может ли стоимость измениться в ходе работ?", answer: "Нет. Стоимость фиксируется в смете. Если при вскрытии обнаружены скрытые дефекты, дополнительные работы согласовываются с заказчиком заранее, с фотофиксацией." },
+    { question: "Работаете с УК, ТСЖ и госзаказчиками?", answer: "Да. Готовим сметы для общего собрания собственников, работаем по безналичному расчёту, предоставляем полный пакет закрывающих документов." },
   ],
 };
 
@@ -42,81 +42,74 @@ export default function FAQ({ className }: { className?: string }) {
   const { openLead } = useLead();
 
   return (
-    <section id="faq" className={"bg-paper py-[80px] md:py-[100px] px-5 md:px-[80px] " + (className || "")}>
-      <div className="max-w-[820px] mx-auto">
-        <div className="text-center mb-[36px]">
-          <span className="text-flame text-[12px] font-bold uppercase tracking-[0.18em]">Вопросы</span>
-          <h2 className="font-display text-[32px] md:text-[46px] font-semibold text-ink leading-[1.08] tracking-[-0.02em] mt-3 mb-[12px]">Отвечаем честно</h2>
-          <p className="text-[16px] text-stone">То, что спрашивают до вызова инженера</p>
-        </div>
-
-        <div className="flex justify-center gap-[6px] border-b border-sand mb-[20px] overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setOpenIndex(0);
-              }}
-              className={"inline-flex items-center gap-[8px] px-[18px] py-[12px] text-[15px] transition-all border-b-2 whitespace-nowrap " + (activeTab === tab.id ? "text-flame font-semibold border-flame" : "text-stone font-medium border-transparent")}
+    <section id="faq" className={"bg-paper " + sectionPad + " " + (className || "")}>
+      <div className={container + " grid lg:grid-cols-[1fr_1.6fr] gap-8 lg:gap-16"}>
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <SectionHeader title="Частые" accent="вопросы" />
+          <div className="-mt-4 md:-mt-6 rounded-3xl bg-ink p-6 flex flex-col gap-4">
+            <div>
+              <p className="font-semibold text-[16px] text-white">Не нашли ответ?</p>
+              <p className="text-[15px] text-white/70 mt-1">Инженер проконсультирует по телефону.</p>
+            </div>
+            <Button
+              arrow
+              onClick={() =>
+                openLead({
+                  title: "Вопрос инженеру",
+                  subtitle: "Опишите вопрос — инженер перезвонит и проконсультирует.",
+                  button: "Отправить вопрос",
+                  source: "faq-question",
+                  image: "inspect.webp",
+                  extra: "comment",
+                })
+              }
             >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
+              Задать вопрос
+            </Button>
+          </div>
         </div>
 
         <div>
-          {faqData[activeTab].map((item, index) => (
-            <div key={activeTab + index} className="border-b border-sand py-[18px]">
-              <button onClick={() => setOpenIndex(openIndex === index ? null : index)} className="w-full flex justify-between items-center gap-4 text-left group">
-                <span className="text-[16px] md:text-[17px] font-semibold text-ink group-hover:text-flame transition-colors">{item.question}</span>
-                <span className={"w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors " + (openIndex === index ? "bg-flame text-white" : "bg-white text-stone")}>
-                  {openIndex === index ? <X size={16} strokeWidth={2} /> : <Plus size={16} strokeWidth={2} />}
-                </span>
+          <div role="tablist" aria-label="Темы вопросов" className="flex gap-1 border-b border-sand mb-2 overflow-x-auto no-scrollbar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setOpenIndex(0);
+                }}
+                className={"inline-flex items-center gap-2 px-4 min-h-[48px] text-[15px] transition-colors border-b-2 -mb-px whitespace-nowrap " + (activeTab === tab.id ? "text-flame-dark font-semibold border-flame" : "text-stone font-medium border-transparent hover:text-ink")}
+              >
+                {tab.icon}
+                {tab.label}
               </button>
-              <AnimatePresence initial={false}>
-                {openIndex === index && (
-                  <motion.div key="a" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" as const }} className="overflow-hidden">
-                    <div className="pt-[12px] pb-[4px] text-[15px] text-[#5d5850] leading-[1.7] pr-10">{item.answer}</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-[44px] bg-ink rounded-[20px] p-[22px] md:p-[30px] flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center">
-            <div className="flex -space-x-[12px]">
-              {["inspect.webp", "torch-close.webp", "case-garage.webp"].map((src, i) => (
-                <img key={src} src={img(src)} alt="" className="w-[46px] h-[46px] rounded-full border-2 border-ink object-cover" style={{ zIndex: 3 - i }} />
-              ))}
-            </div>
-            <div className="ml-[16px]">
-              <p className="font-semibold text-[15px] text-white">Остались вопросы?</p>
-              <p className="text-[14px] text-white/55">Инженер ответит по телефону за 5 минут</p>
-            </div>
+            ))}
           </div>
-          <button
-            onClick={() =>
-              openLead({
-                title: "Задать вопрос инженеру",
-                subtitle: "Напишите вопрос — инженер перезвонит и ответит без продаж и навязывания.",
-                button: "Задать вопрос",
-                source: "faq-question",
-                image: "inspect.webp",
-                extra: "comment",
-              })
-            }
-            className="w-full md:w-auto group bg-fire text-white rounded-[16px] px-[24px] py-[14px] text-[15px] font-semibold transition-all hover:scale-[1.03] flex items-center justify-center gap-3"
-          >
-            Задать вопрос
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-1">
-              <path d="M7 7v6a2 2 0 0 0 2 2h9" />
-              <path d="m15 11 4 4-4 4" />
-            </svg>
-          </button>
+
+          <div role="tabpanel">
+            {faqData[activeTab].map((item, index) => {
+              const open = openIndex === index;
+              return (
+                <div key={activeTab + index} className="border-b border-sand">
+                  <button onClick={() => setOpenIndex(open ? null : index)} aria-expanded={open} className="w-full flex justify-between items-center gap-4 text-left py-5 group">
+                    <span className="text-[16px] md:text-[17px] font-semibold text-ink group-hover:text-flame transition-colors">{item.question}</span>
+                    <span className={"w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-[transform,background-color,color] duration-300 " + (open ? "bg-flame text-white rotate-45" : "bg-white text-stone")}>
+                      <Plus size={16} strokeWidth={2} />
+                    </span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <m.div key="a" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: "easeOut" as const }} className="overflow-hidden">
+                        <p className="pb-5 text-[15px] md:text-base text-stone leading-[1.7] pr-12">{item.answer}</p>
+                      </m.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

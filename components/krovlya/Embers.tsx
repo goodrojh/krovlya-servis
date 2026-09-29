@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 
-// Искры от горелки, поднимающиеся над кадром. Лёгкий canvas, уважает prefers-reduced-motion.
-export default function Embers({ className = "", density = 46 }: { className?: string; density?: number }) {
+// Искры от горелки. Один заранее отрисованный спрайт, пауза вне экрана и на скрытой вкладке.
+export default function Embers({ className = "", density = 40 }: { className?: string; density?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -11,62 +11,94 @@ export default function Embers({ className = "", density = 46 }: { className?: s
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    let w = 0, h = 0, raf = 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const count = window.innerWidth < 768 ? Math.round(density * 0.55) : density;
 
-    type P = { x: number; y: number; vx: number; vy: number; r: number; life: number; max: number; hue: number };
+    const mobile = window.innerWidth < 768;
+    const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+    const count = mobile ? Math.round(density * 0.45) : density;
+
+    const sprite = document.createElement("canvas");
+    sprite.width = sprite.height = 32;
+    const s = sprite.getContext("2d")!;
+    const g = s.createRadialGradient(16, 16, 0, 16, 16, 16);
+    g.addColorStop(0, "rgba(255,210,140,1)");
+    g.addColorStop(0.25, "rgba(255,140,50,0.8)");
+    g.addColorStop(1, "rgba(255,90,20,0)");
+    s.fillStyle = g;
+    s.fillRect(0, 0, 32, 32);
+
+    let w = 0, h = 0, raf = 0, running = false, visible = true;
+    type P = { x: number; y: number; vx: number; vy: number; r: number; life: number; max: number; seed: number };
     const ps: P[] = [];
     const spawn = (initial = false): P => ({
-      x: w * (0.45 + Math.random() * 0.55),
-      y: initial ? Math.random() * h : h * (0.75 + Math.random() * 0.3),
-      vx: (Math.random() - 0.3) * 0.35,
-      vy: -(0.25 + Math.random() * 0.9),
-      r: 0.6 + Math.random() * 1.8,
+      x: w * (0.5 + Math.random() * 0.5),
+      y: initial ? Math.random() * h : h * (0.72 + Math.random() * 0.3),
+      vx: (Math.random() - 0.35) * 0.3,
+      vy: -(0.25 + Math.random() * 0.8),
+      r: 3 + Math.random() * 6,
       life: 0,
-      max: 220 + Math.random() * 320,
-      hue: 18 + Math.random() * 26,
+      max: 220 + Math.random() * 300,
+      seed: Math.random() * 100,
     });
 
     const resize = () => {
       w = canvas.clientWidth;
       h = canvas.clientHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = "lighter";
     };
     resize();
     for (let i = 0; i < count; i++) ps.push(spawn(true));
 
     const tick = () => {
       ctx.clearRect(0, 0, w, h);
-      ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < ps.length; i++) {
         const p = ps[i];
         p.life++;
-        p.x += p.vx + Math.sin((p.life + i * 13) / 30) * 0.25;
+        p.x += p.vx + Math.sin((p.life + p.seed) / 30) * 0.22;
         p.y += p.vy;
         const t = p.life / p.max;
-        const a = t < 0.1 ? t * 10 : 1 - t;
         if (t >= 1 || p.y < -10) {
           ps[i] = spawn();
           continue;
         }
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-        g.addColorStop(0, `hsla(${p.hue}, 100%, 70%, ${0.9 * a})`);
-        g.addColorStop(1, `hsla(${p.hue}, 100%, 50%, 0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = (t < 0.1 ? t * 10 : 1 - t) * 0.85;
+        ctx.drawImage(sprite, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
       }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    window.addEventListener("resize", resize);
-    return () => {
+    const start = () => {
+      if (running || !visible || document.hidden) return;
+      running = true;
+      raf = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      running = false;
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+    };
+
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) start();
+      else stop();
+    });
+    io.observe(canvas);
+    const onVis = () => (document.hidden ? stop() : start());
+    document.addEventListener("visibilitychange", onVis);
+    let rt: ReturnType<typeof setTimeout>;
+    const onResize = () => {
+      clearTimeout(rt);
+      rt = setTimeout(resize, 150);
+    };
+    window.addEventListener("resize", onResize);
+    start();
+
+    return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("resize", onResize);
     };
   }, [density]);
 

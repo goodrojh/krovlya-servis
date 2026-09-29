@@ -1,316 +1,237 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { Variants } from "framer-motion";
-import { Flame, Layers, Droplets, HardHat, FileSignature, Check, ShieldCheck, ArrowUpRight } from "lucide-react";
+import { Flame, Layers, ArrowUpRight, Check } from "lucide-react";
 import { img } from "@/lib/site";
 import { useLead } from "./LeadModal";
+import { SectionHeader, container, sectionPad } from "./ui";
 
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const cardVariants: Variants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } } };
 
+// Разрез сверху вниз. Анимация собирает слои снизу вверх — в порядке монтажа.
 const layers = [
-  { label: "Верхний слой с посыпкой", sub: "защита от УФ и града", color: "bg-[#2a2c30]", w: "100%" },
-  { label: "Подкладочный слой", sub: "основная гидроизоляция", color: "bg-[#3a3d42]", w: "96%" },
-  { label: "Битумный праймер", sub: "сцепление с основанием", color: "bg-amber", w: "92%" },
-  { label: "Сухое основание", sub: "стяжка / старый ковёр", color: "bg-[#b9b0a2]", w: "88%" },
+  { label: "Верхний слой с посыпкой", note: "4–5 мм", h: 18, cls: "bg-[#2b2d31] [background-image:radial-gradient(rgba(255,255,255,0.35)_1px,transparent_1.2px)] [background-size:6px_6px]" },
+  { label: "Подкладочный слой", note: "3–4 мм", h: 14, cls: "bg-[#3d4046]" },
+  { label: "Битумный праймер", note: "грунтовка", h: 5, cls: "bg-amber" },
+  { label: "Цементно-песчаная стяжка", note: "сухое основание", h: 26, cls: "bg-[#cfc6b8] [background-image:repeating-linear-gradient(135deg,rgba(0,0,0,0.08)_0_2px,transparent_2px_8px)]" },
+  { label: "Плита перекрытия", note: "ж/б", h: 30, cls: "bg-[#a8a196] [background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.1)_0_2px,transparent_2px_10px)]" },
+];
+
+const STACK_H = 250;
+const ROW_H = STACK_H / 5;
+const totalH = layers.reduce((a, l) => a + l.h, 0);
+const layerH = layers.map((l) => (l.h / totalH) * STACK_H);
+const layerMid = layerH.map((h, i) => layerH.slice(0, i).reduce((a, b) => a + b, 0) + h / 2);
+
+const steps = [
+  { t: "Заявка", d: "в день обращения" },
+  { t: "Осмотр и замеры", d: "1 день" },
+  { t: "Смета и договор", d: "1–2 дня" },
+  { t: "Выполнение работ", d: "по графику" },
+  { t: "Акт и гарантия", d: "при сдаче" },
 ];
 
 const life = [
-  { label: "Латка мастикой", years: "≈ 1 год", pct: 8, tone: "bg-stone/40" },
-  { label: "Ремонт в 1 слой", years: "7–10 лет", pct: 45, tone: "bg-ember/70" },
-  { label: "Наш ремонт в 2 слоя", years: "15–25 лет", pct: 100, tone: "bg-fire" },
+  { label: "Локальная заплата мастикой", from: 1, to: 2, tone: "bg-stone/45", text: "1–2 года" },
+  { label: "Ремонт в один слой", from: 7, to: 10, tone: "bg-ember", text: "7–10 лет" },
+  { label: "Капитальный ремонт в два слоя", from: 15, to: 25, tone: "bg-flame", text: "15–25 лет" },
 ];
+const MAX = 25;
 
 export default function Features({ className }: { className?: string }) {
   const { openLead } = useLead();
   return (
-    <section id="why" className={"w-full px-5 md:px-6 py-[90px] md:py-[140px] bg-paper relative overflow-hidden " + (className || "")}>
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-flame/[0.07] rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-amber/[0.08] rounded-full blur-[100px] translate-y-1/2 pointer-events-none" />
+    <section id="why" className={"w-full bg-paper relative overflow-hidden " + sectionPad + " " + (className || "")}>
+      <div className={container + " relative z-10"}>
+        <SectionHeader
+          title="Ремонт по технологии,"
+          accent="а не временная заплата"
+          lead="Повторные протечки чаще всего возникают после локальных заплат без устранения причины. Мы определяем источник протечки и выполняем ремонт в соответствии с СП 17.13330 «Кровли»."
+        />
 
-      <div className="max-w-7xl mx-auto relative z-10 mb-12 md:mb-16 text-center">
-        <motion.span
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="inline-block text-flame text-[12px] font-bold uppercase tracking-[0.18em] mb-4"
-        >
-          Почему крыши после нас не текут
-        </motion.span>
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" as const }}
-          className="font-display text-[32px] md:text-5xl font-semibold text-ink mb-6 leading-[1.08] tracking-[-0.02em]"
-        >
-          Чиним так, чтобы <br className="hidden md:block" />
-          <span className="italic text-flame">не пришлось чинить снова</span>
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" as const }}
-          className="text-base md:text-lg text-stone max-w-2xl mx-auto"
-        >
-          Большинство протечек возвращаются через сезон, потому что крышу «мажут», а не ремонтируют. Мы ищем причину и восстанавливаем кровельный ковёр по технологии.
-        </motion.p>
-      </div>
-
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl mx-auto relative z-10"
-      >
-        {/* Карточка 1 — горелка */}
-        <motion.div
-          variants={cardVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="bg-ink rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex flex-col gap-10 group relative overflow-hidden min-h-[460px]"
-        >
-          <div className="absolute inset-0 z-0">
-            <img src={img("torch-close.webp")} alt="Наплавление битумной мембраны газовой горелкой" loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-black/70" />
-          </div>
-          <div className="relative z-10">
-            <h3 className="font-display text-[28px] md:text-4xl font-semibold text-white leading-[1.08] tracking-tight drop-shadow-lg">
-              Проплавляем, <br />
-              <span className="italic text-amber">а не приклеиваем.</span>
-            </h3>
-            <p className="text-base text-white/85 leading-relaxed max-w-[450px] mt-3 drop-shadow-md">
-              Битумно-полимерный ковёр сплавляется с основанием в монолит. Воде просто некуда затечь.
-            </p>
-          </div>
-          <div className="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 relative z-10">
-            {[
-              { icon: <Layers className="h-6 w-6 text-white" />, t: "Два слоя ковра", d: "Подкладочный + верхний с посыпкой. Двойная защита на 15+ лет." },
-              { icon: <Flame className="h-6 w-6 text-white" />, t: "Нахлёст от 10 см", d: "Каждый шов проплавляем до выхода битумного валика." },
-            ].map((c) => (
-              <div key={c.t} className="flex flex-col gap-4 p-5 md:p-6 rounded-[24px] bg-white/10 backdrop-blur-xl border border-white/20 transition-all hover:bg-white/20 group/item shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shrink-0 transition-transform group-hover/item:scale-110">
-                  {c.icon}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-bold text-white">{c.t}</span>
-                  <p className="text-[12px] text-white/70 leading-relaxed">{c.d}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Карточка 2 — кровельный пирог */}
-        <motion.div
-          variants={cardVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="bg-white rounded-[28px] md:rounded-[32px] border border-sand p-5 md:p-6 flex flex-col overflow-hidden relative min-h-[460px]"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-amber/15 via-paper/40 to-flame/10" />
-          <div className="absolute top-1/4 right-0 w-64 h-64 bg-flame/15 rounded-full blur-[80px]" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber/20 rounded-full blur-[60px]" />
-
-          <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center pointer-events-none select-none py-6">
-            <div className="w-full max-w-[330px] bg-white/50 backdrop-blur-xl border border-white/70 rounded-[24px] p-5 md:p-6 shadow-2xl shadow-flame/10">
-              <div className="flex flex-col items-center gap-1.5">
-                {layers.map((l, i) => (
-                  <motion.div
-                    key={l.label}
-                    initial={{ opacity: 0, y: -24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.9 - i * 0.18, type: "spring", damping: 16 }}
-                    style={{ width: l.w }}
-                    className="flex items-center gap-3 bg-white/85 rounded-xl p-2.5 border border-white/50 shadow-sm"
-                  >
-                    <div className={"w-8 h-5 rounded-md shrink-0 " + l.color} />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[12px] font-semibold text-ink leading-tight truncate">{l.label}</span>
-                      <span className="text-[10px] text-stone leading-tight">{l.sub}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="mt-6 bg-white/90 rounded-full border border-white p-2 flex items-center gap-3 shadow-lg shadow-flame/10">
-                <div className="w-6 h-6 rounded-full border-2 border-amber/30 border-t-flame animate-spin" />
-                <span className="text-[11px] font-medium text-stone flex-1">Проверяем влажность основания…</span>
-                <div className="w-7 h-7 rounded-full bg-fire flex items-center justify-center">
-                  <Droplets className="h-3.5 w-3.5 text-white" />
-                </div>
-              </div>
+        <m.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* 1 — Наплавление */}
+          <m.article variants={cardVariants} className="bg-ink rounded-3xl p-5 md:p-7 flex flex-col gap-10 group relative overflow-hidden min-h-[440px] md:min-h-[480px]">
+            <div className="absolute inset-0 z-0">
+              <img src={img("torch-close.webp")} alt="Наплавление битумно-полимерного материала газовой горелкой" loading="lazy" decoding="async" width={1000} height={747} className="w-full h-full object-cover md:group-hover:scale-105 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/25 to-black/80" />
             </div>
-          </div>
-
-          <div className="mt-auto relative z-10 pt-4">
-            <h3 className="font-display text-xl font-semibold text-ink">Что внутри вашей крыши</h3>
-            <p className="text-sm text-stone leading-relaxed mt-2">
-              Вскрываем проблемные участки, сушим основание, грунтуем праймером. По мокрому не кладём никогда — иначе вздутие через месяц.
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Карточка 3 — путь заявки */}
-        <motion.div
-          variants={cardVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="bg-white rounded-[28px] md:rounded-[32px] border border-sand overflow-hidden flex flex-col"
-        >
-          <div className="bg-paper h-[300px] relative flex items-center justify-center overflow-hidden border-b border-sand p-6 md:p-8">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber/10 via-white to-flame/10" />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-12 bg-flame/15 blur-2xl rounded-full" />
-
-            <motion.div
-              animate={{ y: [0, -12, 0], rotate: [0, 5, 0], scale: [1, 1.05, 1] }}
-              transition={{ duration: 6, repeat: Infinity as number, ease: "easeInOut" as const }}
-              className="absolute top-8 right-6 md:right-10 w-14 h-14 rounded-2xl bg-white/50 backdrop-blur-md border border-white/70 shadow-[0_20px_40px_rgba(0,0,0,0.08)] hidden sm:flex items-center justify-center"
-            >
-              <HardHat className="h-7 w-7 text-flame" />
-            </motion.div>
-            <motion.div
-              animate={{ y: [0, 12, 0], rotate: [0, -5, 0], scale: [1, 1.05, 1] }}
-              transition={{ duration: 5, repeat: Infinity as number, ease: "easeInOut" as const, delay: 1 }}
-              className="absolute bottom-8 left-6 md:left-10 w-16 h-16 rounded-[22px] bg-white/50 backdrop-blur-md border border-white/70 shadow-[0_20px_40px_rgba(0,0,0,0.08)] hidden sm:flex items-center justify-center"
-            >
-              <ShieldCheck className="h-8 w-8 text-ember" />
-            </motion.div>
-
-            <div className="relative z-10 w-full max-w-[270px] flex flex-col items-center">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-2xl p-3.5 shadow-xl shadow-flame/10 border border-flame/15 flex items-center gap-3 w-full mb-8 relative"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#3b82f6] flex items-center justify-center shrink-0">
-                  <Droplets className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[12px] font-bold text-ink">Протечка после дождя</span>
-                  <span className="text-[10px] text-stone">«Капает в подъезде на 9 этаже»</span>
-                </div>
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-px h-8 bg-gradient-to-b from-flame/30 to-flame/60" />
-              </motion.div>
-
-              <div className="grid grid-cols-2 gap-3 w-full relative">
-                <div className="absolute -top-4 left-1/4 right-1/4 h-px bg-flame/30" />
-                <div className="absolute -top-4 left-1/4 w-px h-4 bg-flame/30" />
-                <div className="absolute -top-4 right-1/4 w-px h-4 bg-flame/30" />
-                {[
-                  { icon: <HardHat className="h-4 w-4 text-flame" />, t: "Выезд инженера" },
-                  { icon: <FileSignature className="h-4 w-4 text-flame" />, t: "Смета и договор" },
-                ].map((n, i) => (
-                  <motion.div
-                    key={n.t}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2 + i * 0.1 }}
-                    className="bg-white/85 backdrop-blur-md rounded-xl p-3 shadow-lg shadow-flame/5 border border-white flex flex-col gap-2 items-center text-center"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-flame/10 flex items-center justify-center">{n.icon}</div>
-                    <span className="text-[11px] font-bold text-ink">{n.t}</span>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
-                className="mt-7 bg-leaf text-white text-[11px] font-bold py-2 px-4 rounded-full shadow-lg shadow-leaf/30 flex items-center gap-2"
-              >
-                <Check className="h-3 w-3 stroke-[3]" />
-                <span>Потолок сухой. Гарантия выдана</span>
-              </motion.div>
+            <div className="relative z-10">
+              <h3 className="font-display text-[24px] md:text-[32px] font-semibold text-white leading-[1.12] tracking-tight">Наплавление с&nbsp;проплавом швов</h3>
+              <p className="text-[15px] md:text-base text-white/85 leading-relaxed max-w-[440px] mt-3">
+                Материал сплавляется с&nbsp;основанием и&nbsp;соседними полотнами в&nbsp;сплошной водонепроницаемый слой.
+              </p>
             </div>
-          </div>
-          <div className="p-6">
-            <h3 className="font-display text-xl font-semibold text-ink">От звонка до сухого потолка</h3>
-            <p className="text-base text-stone leading-relaxed mt-2">
-              Аварийную протечку локализуем в течение суток, а капитальный ремонт планируем без спешки — по смете и в срок из договора.
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Карточка 4 — срок службы */}
-        <motion.div
-          variants={cardVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="bg-white rounded-[28px] md:rounded-[32px] border border-sand overflow-hidden flex flex-col"
-        >
-          <div className="bg-paper h-[300px] relative flex flex-col items-center justify-center border-b border-sand p-5 md:p-8">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber/10 via-white to-flame/10" />
-            <div className="w-full h-full bg-white/65 backdrop-blur-xl rounded-2xl border border-white/80 shadow-2xl shadow-flame/5 p-5 md:p-6 flex flex-col gap-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-flame/10 flex items-center justify-center">
-                    <Flame className="h-5 w-5 text-flame" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[12px] font-bold text-ink leading-tight">Срок службы кровли</span>
-                    <span className="text-[10px] text-stone leading-tight">без повторных протечек</span>
+            <div className="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
+              {[
+                { icon: <Layers className="h-5 w-5 text-white" />, t: "Два слоя", d: "Подкладочный и верхний с защитной посыпкой" },
+                { icon: <Flame className="h-5 w-5 text-white" />, t: "Нахлёст 100 / 150 мм", d: "Продольные и торцевые швы по нормативу" },
+              ].map((c) => (
+                <div key={c.t} className="flex sm:flex-col gap-4 p-4 md:p-5 rounded-2xl bg-black/45 md:bg-white/10 md:backdrop-blur-xl border border-white/15">
+                  <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center border border-white/25 shrink-0">{c.icon}</div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[15px] font-semibold text-white">{c.t}</span>
+                    <p className="text-[13px] text-white/75 leading-snug">{c.d}</p>
                   </div>
                 </div>
-                <div className="flex gap-1.5">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-1.5 h-6 bg-flame/10 rounded-full overflow-hidden flex items-end">
-                      <motion.div
-                        animate={{ height: ["20%", "90%", "20%"] }}
-                        transition={{ duration: 2.5, repeat: Infinity as number, delay: i * 0.4, ease: "easeInOut" as const }}
-                        className="w-full bg-flame"
-                      />
-                    </div>
+              ))}
+            </div>
+          </m.article>
+
+          {/* 2 — Разрез кровельного пирога */}
+          <m.article variants={cardVariants} className="bg-white rounded-3xl border border-sand p-5 md:p-7 flex flex-col relative overflow-hidden min-h-[440px] md:min-h-[480px]">
+            <div className="relative flex-1 flex items-center justify-center py-4">
+              <div className="w-full max-w-[470px] flex items-stretch" role="img" aria-label="Состав кровельного ковра: верхний слой, подкладочный слой, праймер, стяжка, плита перекрытия">
+                <div className="w-[38%] shrink-0 flex flex-col rounded-lg overflow-hidden shadow-[0_18px_40px_-18px_rgba(12,13,15,0.5)]" style={{ height: STACK_H }}>
+                  {layers.map((l, i) => (
+                    <m.div
+                      key={l.label}
+                      initial={{ opacity: 0, y: -16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.15 + (layers.length - 1 - i) * 0.18, duration: 0.45, ease: "easeOut" as const }}
+                      style={{ height: layerH[i] }}
+                      className={"w-full shrink-0 " + l.cls}
+                    />
+                  ))}
+                </div>
+                <svg width="28" height={STACK_H} className="shrink-0 text-ink/35" aria-hidden>
+                  {layers.map((l, i) => {
+                    const y1 = layerMid[i];
+                    const y2 = ROW_H * i + ROW_H / 2;
+                    return <path key={l.label} d={`M0 ${y1} H10 L20 ${y2} H28`} fill="none" stroke="currentColor" strokeWidth="1" />;
+                  })}
+                </svg>
+                <div className="flex-1 min-w-0 flex flex-col" style={{ height: STACK_H }}>
+                  {layers.map((l, i) => (
+                    <m.div
+                      key={l.label}
+                      initial={{ opacity: 0, x: 8 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + (layers.length - 1 - i) * 0.18 }}
+                      style={{ height: ROW_H }}
+                      className="flex flex-col justify-center pl-2 leading-tight"
+                    >
+                      <span className="text-[13px] font-semibold text-ink">{l.label}</span>
+                      <span className="text-[12px] text-stone mt-0.5">{l.note}</span>
+                    </m.div>
                   ))}
                 </div>
               </div>
-              <div className="flex-1 flex flex-col justify-center gap-4">
-                {life.map((l, i) => (
-                  <div key={l.label} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-[12px]">
-                      <span className={"font-semibold " + (i === 2 ? "text-ink" : "text-stone")}>{l.label}</span>
-                      <span className={"font-bold " + (i === 2 ? "text-flame" : "text-stone")}>{l.years}</span>
+            </div>
+            <div className="relative pt-6 border-t border-sand">
+              <h3 className="font-display text-[20px] md:text-[22px] font-semibold text-ink">Состав кровельного ковра</h3>
+              <p className="text-[15px] text-stone leading-relaxed mt-2">
+                Перед наплавлением проверяем влажность основания и&nbsp;обрабатываем его праймером. На&nbsp;влажное основание материал не&nbsp;укладывается.
+              </p>
+            </div>
+          </m.article>
+
+          {/* 3 — Порядок работ */}
+          <m.article variants={cardVariants} className="bg-white rounded-3xl border border-sand overflow-hidden flex flex-col">
+            <div className="bg-paper/70 relative flex items-center justify-center border-b border-sand px-5 py-8 md:px-10 md:py-10 min-h-[300px]">
+              <ol className="w-full max-w-[380px] relative">
+                <span className="absolute left-[15px] top-4 bottom-4 w-px bg-sand" aria-hidden />
+                <m.span
+                  initial={{ scaleY: 0 }}
+                  whileInView={{ scaleY: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.4, ease: "easeInOut" as const, delay: 0.2 }}
+                  className="absolute left-[15px] top-4 bottom-4 w-px bg-flame origin-top"
+                  aria-hidden
+                />
+                {steps.map((s, i) => {
+                  const last = i === steps.length - 1;
+                  return (
+                    <m.li
+                      key={s.t}
+                      initial={{ opacity: 0, x: -8 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.2 + i * 0.25 }}
+                      className="relative flex items-center gap-4 py-2"
+                    >
+                      <span className={"relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 " + (last ? "bg-leaf text-white" : "bg-white border-2 border-flame text-flame")}>
+                        {last ? <Check className="w-4 h-4 stroke-[3]" /> : i + 1}
+                      </span>
+                      <span className="flex-1 flex items-baseline justify-between gap-3 border-b border-sand/80 pb-2">
+                        <span className="text-[14px] md:text-[15px] font-semibold text-ink">{s.t}</span>
+                        <span className="text-[12px] md:text-[13px] text-stone whitespace-nowrap">{s.d}</span>
+                      </span>
+                    </m.li>
+                  );
+                })}
+              </ol>
+            </div>
+            <div className="p-5 md:p-7">
+              <h3 className="font-display text-[20px] md:text-[22px] font-semibold text-ink">Порядок работ</h3>
+              <p className="text-[15px] text-stone leading-relaxed mt-2">
+                Аварийную протечку локализуем в&nbsp;течение 24&nbsp;часов. Плановый ремонт выполняется в&nbsp;сроки, установленные договором.
+              </p>
+            </div>
+          </m.article>
+
+          {/* 4 — Срок службы: диапазоны на общей шкале */}
+          <m.article variants={cardVariants} className="bg-white rounded-3xl border border-sand overflow-hidden flex flex-col">
+            <div className="bg-paper/70 relative flex items-center border-b border-sand px-5 py-8 md:px-10 md:py-10 min-h-[300px]">
+              <div className="w-full" role="img" aria-label="Срок службы: заплата 1–2 года, ремонт в один слой 7–10 лет, капитальный ремонт в два слоя 15–25 лет">
+                <div className="flex flex-col gap-5">
+                  {life.map((l, i) => (
+                    <div key={l.label}>
+                      <div className="flex justify-between gap-3 text-[13px] md:text-[14px] mb-2">
+                        <span className={"font-semibold " + (i === 2 ? "text-ink" : "text-stone")}>{l.label}</span>
+                        <span className={"font-bold whitespace-nowrap " + (i === 2 ? "text-flame-dark" : "text-ink/70")}>{l.text}</span>
+                      </div>
+                      <div className="relative h-3 rounded-full bg-sand/70">
+                        <m.div
+                          initial={{ scaleX: 0 }}
+                          whileInView={{ scaleX: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.9, delay: 0.2 + i * 0.2, ease: "easeOut" as const }}
+                          style={{ left: (l.from / MAX) * 100 + "%", width: Math.max(((l.to - l.from) / MAX) * 100, 2.5) + "%" }}
+                          className={"absolute top-0 h-full rounded-full origin-left " + l.tone}
+                        />
+                      </div>
                     </div>
-                    <div className="h-3 rounded-full bg-sand/70 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: l.pct + "%" }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.3, delay: 0.2 + i * 0.2, ease: "easeOut" as const }}
-                        className={"h-full rounded-full " + l.tone}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="relative mt-4 h-5 text-[11px] text-stone">
+                  {[0, 5, 10, 15, 20, 25].map((y) => (
+                    <span key={y} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: (y / MAX) * 100 + "%" }}>
+                      {y}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-[11px] text-stone text-right">лет</div>
               </div>
             </div>
-          </div>
-          <div className="p-6 flex flex-col">
-            <h3 className="font-display text-xl font-semibold text-ink">Считаем годы без протечек, а не рубли за метр</h3>
-            <p className="text-base text-stone leading-relaxed mt-2">
-              Дешёвая латка обходится дороже: через год снова вода, испорченный потолок и новый вызов. Покажем честное сравнение вариантов в смете.
-            </p>
-            <button
-              onClick={() =>
-                openLead({
-                  title: "Сравнить варианты ремонта",
-                  subtitle: "Посчитаем 2–3 варианта для вашей крыши: латка, 1 слой, 2 слоя — со сроками службы и ценой за год.",
-                  button: "Получить сравнение",
-                  source: "features-compare",
-                  image: "estimate.webp",
-                  extra: "area",
-                })
-              }
-              className="mt-4 inline-flex items-center gap-1.5 text-[15px] font-semibold text-flame hover:gap-2.5 transition-all w-fit"
-            >
-              Сравнить варианты для моей крыши <ArrowUpRight className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
+            <div className="p-5 md:p-7 flex flex-col">
+              <h3 className="font-display text-[20px] md:text-[22px] font-semibold text-ink">Срок службы покрытия</h3>
+              <p className="text-[15px] text-stone leading-relaxed mt-2">
+                Ориентировочный срок службы при разных вариантах ремонта. В&nbsp;смете приводим несколько вариантов с&nbsp;расчётом стоимости.
+              </p>
+              <button
+                onClick={() =>
+                  openLead({
+                    title: "Сравнение вариантов ремонта",
+                    subtitle: "Подготовим расчёт нескольких вариантов ремонта для вашей кровли с указанием сроков службы.",
+                    button: "Запросить сравнение",
+                    source: "features-compare",
+                    image: "estimate.webp",
+                    extra: "area",
+                  })
+                }
+                className="mt-3 inline-flex items-center gap-1.5 min-h-[44px] text-[15px] font-semibold text-flame-dark hover:gap-2.5 transition-all w-fit"
+              >
+                Запросить сравнение вариантов <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+          </m.article>
+        </m.div>
+      </div>
     </section>
   );
 }

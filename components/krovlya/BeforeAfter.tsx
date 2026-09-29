@@ -1,16 +1,17 @@
 "use client";
 import React, { useCallback, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { MoveHorizontal, Check } from "lucide-react";
 import { img } from "@/lib/site";
 import { useLead } from "./LeadModal";
+import { Button, container, sectionPad } from "./ui";
 
 const changes = [
-  "Сняли вздутия и сгнившие заплаты",
-  "Просушили и прогрунтовали основание",
-  "Наплавили новый ковёр в 2 слоя с посыпкой",
-  "Завели материал на парапеты и вентшахту",
-  "Поставили новую воронку — лужи ушли",
+  "Демонтаж вздутий и старых заплат",
+  "Просушка и грунтовка основания праймером",
+  "Наплавление нового ковра в два слоя",
+  "Примыкания к парапетам и вентшахте",
+  "Замена водосточной воронки",
 ];
 
 export default function BeforeAfter({ className }: { className?: string }) {
@@ -23,86 +24,87 @@ export default function BeforeAfter({ className }: { className?: string }) {
   const move = useCallback((clientX: number) => {
     const r = box.current?.getBoundingClientRect();
     if (!r) return;
-    const p = ((clientX - r.left) / r.width) * 100;
-    setPos(Math.max(2, Math.min(98, p)));
+    setPos(Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100)));
   }, []);
 
   return (
-    <section id="result" className={"w-full bg-ink px-5 md:px-8 py-[90px] md:py-[130px] relative overflow-hidden grain " + (className || "")}>
-      <div className="absolute bottom-0 left-1/3 w-[600px] h-[400px] bg-flame/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="max-w-7xl mx-auto relative z-10 grid lg:grid-cols-[1.6fr_1fr] gap-8 md:gap-12 items-center">
+    <section id="result" className={"w-full bg-ink relative overflow-hidden grain " + sectionPad + " " + (className || "")}>
+      <div className={container + " relative z-10 grid lg:grid-cols-[1.55fr_1fr] gap-10 lg:gap-14 items-center"}>
         <div className="order-2 lg:order-1">
           <div
             ref={box}
-            className="relative w-full aspect-[4/3] md:aspect-[16/10] rounded-[24px] md:rounded-[32px] overflow-hidden select-none touch-pan-y cursor-ew-resize shadow-2xl"
+            role="slider"
+            tabIndex={0}
+            aria-label="Сравнение кровли до и после ремонта"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(pos)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") setPos((p) => Math.max(0, p - 5));
+              if (e.key === "ArrowRight") setPos((p) => Math.min(100, p + 5));
+              setTouched(true);
+            }}
+            className="relative w-full aspect-[4/3] md:aspect-[16/10] rounded-3xl overflow-hidden select-none touch-pan-y cursor-ew-resize bg-graphite"
             onPointerDown={(e) => {
               dragging.current = true;
               setTouched(true);
-              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+              e.currentTarget.setPointerCapture(e.pointerId);
               move(e.clientX);
             }}
             onPointerMove={(e) => dragging.current && move(e.clientX)}
             onPointerUp={() => (dragging.current = false)}
             onPointerCancel={() => (dragging.current = false)}
           >
-            <img src={img("after.webp")} alt="Плоская кровля после капитального ремонта" className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
-            <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-              <img src={img("before.webp")} alt="Плоская кровля до ремонта: вздутия и лужи" className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
+            <img src={img("after.webp")} alt="Кровля после капитального ремонта" loading="lazy" decoding="async" width={1400} height={781} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
+            <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+              <img src={img("before.webp")} alt="Кровля до ремонта: вздутия и застой воды" loading="lazy" decoding="async" width={1400} height={781} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
             </div>
-            <span className="absolute top-4 left-4 rounded-full bg-black/60 backdrop-blur-md text-white text-[12px] font-bold uppercase tracking-[0.12em] px-3 py-1.5">Было</span>
-            <span className="absolute top-4 right-4 rounded-full bg-fire text-white text-[12px] font-bold uppercase tracking-[0.12em] px-3 py-1.5">Стало</span>
-            <div className="absolute top-0 bottom-0 w-[3px] bg-white shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-none" style={{ left: `calc(${pos}% - 1.5px)` }}>
-              <motion.div
-                animate={touched ? {} : { x: [-6, 6, -6] }}
-                transition={{ duration: 1.6, repeat: Infinity as number, ease: "easeInOut" as const }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white text-ink flex items-center justify-center shadow-xl"
+            <span className="absolute top-3 left-3 md:top-4 md:left-4 rounded-full bg-black/65 text-white text-[12px] font-bold uppercase tracking-[0.1em] px-3 py-1.5">До</span>
+            <span className="absolute top-3 right-3 md:top-4 md:right-4 rounded-full bg-flame text-white text-[12px] font-bold uppercase tracking-[0.1em] px-3 py-1.5">После</span>
+            <div className="absolute top-0 bottom-0 w-[3px] -ml-[1.5px] bg-white pointer-events-none" style={{ left: `${pos}%` }}>
+              <m.div
+                animate={touched ? { x: 0 } : { x: [-6, 6, -6] }}
+                transition={touched ? { duration: 0.2 } : { duration: 1.6, repeat: Infinity as number, ease: "easeInOut" as const }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-14 md:h-14 rounded-full bg-white text-ink flex items-center justify-center shadow-xl"
               >
-                <MoveHorizontal className="w-6 h-6" />
-              </motion.div>
+                <MoveHorizontal className="w-5 h-5 md:w-6 md:h-6" />
+              </m.div>
             </div>
           </div>
-          <p className="text-white/40 text-[13px] mt-3 text-center lg:text-left">Потяните ползунок — это одна и та же крыша</p>
+          <p className="text-white/60 text-[13px] mt-3">Перетащите разделитель, чтобы сравнить состояние кровли. Иллюстрация типового объёма работ.</p>
         </div>
 
         <div className="order-1 lg:order-2">
-          <span className="text-amber text-[12px] font-bold uppercase tracking-[0.18em]">До / после</span>
-          <h2 className="font-display text-[32px] md:text-5xl font-semibold text-white leading-[1.08] tracking-[-0.02em] mt-4 mb-6">
-            Крыша, которая <span className="italic text-fire">снова работает</span>
+          <h2 className="font-display text-[28px] sm:text-[34px] md:text-[44px] font-semibold text-white leading-[1.1] tracking-[-0.02em] text-balance">
+            Капитальный ремонт <span className="text-amber">кровли жилого дома</span>
           </h2>
-          <p className="text-white/60 leading-relaxed mb-6">Типичный капитальный ремонт кровли жилого дома. Что изменилось:</p>
+          <p className="text-white/70 text-[16px] md:text-[17px] leading-relaxed mt-5 mb-6">Состав работ:</p>
           <ul className="flex flex-col gap-3 mb-8">
-            {changes.map((c, i) => (
-              <motion.li
-                key={c}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 * i }}
-                className="flex items-start gap-3 text-white/85"
-              >
+            {changes.map((c) => (
+              <li key={c} className="flex items-start gap-3 text-white/90 text-[15px] md:text-base">
                 <span className="w-6 h-6 rounded-full bg-leaf/20 text-leaf flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </span>
                 {c}
-              </motion.li>
+              </li>
             ))}
           </ul>
-          <button
+          <Button
+            variant="light"
+            arrow
             onClick={() =>
               openLead({
-                title: "Хочу такую же крышу",
-                subtitle: "Инженер приедет, оценит состояние и предложит вариант: локальный ремонт или капитальный.",
+                title: "Расчёт ремонта для вашего объекта",
+                subtitle: "Инженер оценит состояние кровли и предложит вариант ремонта: локальный или капитальный.",
                 button: "Вызвать инженера",
                 source: "before-after",
                 image: "after.webp",
                 extra: "area",
-                badge: "Осмотр 0 ₽",
               })
             }
-            className="w-full sm:w-auto rounded-full px-8 py-4 bg-white text-ink font-semibold hover:bg-amber transition-all hover:scale-[1.03] active:scale-95"
           >
-            Хочу такую же крышу
-          </button>
+            Рассчитать для своего объекта
+          </Button>
         </div>
       </div>
     </section>
